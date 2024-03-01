@@ -38,6 +38,7 @@ class Server
 	Player p2;
 	char turn = 'O';
 	bool isStarted = false;
+	bool ended = false;
 
 	char board[3][3] = { {'_', '_', '_'},
 						 {'_', '_', '_'},

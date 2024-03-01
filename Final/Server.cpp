@@ -74,7 +74,7 @@ void Server::ListenForConnections() {
 }
 
 void Server::Listen(Player* p, int playerNum) {
-	while (true) {
+	while (!ended) {
 		string command = Recieve(p->socket);
 		stringstream ssCommand;
 		ssCommand << command;
@@ -85,6 +85,7 @@ void Server::Listen(Player* p, int playerNum) {
 			if (!isStarted) StartGame(playerNum);
 		}
 		else if (parsedCommand == "MOVE") {
+			if (!isStarted) continue;
 			if (turn == p->sign) {
 				Send("INVALID_MOVE\n", p->socket);
 				continue;
@@ -100,6 +101,7 @@ void Server::Listen(Player* p, int playerNum) {
 			board[row][column] = p->sign;
 			turn = p->sign;
 			SendBoard();
+			CheckBoard(p->sign);
 		}
 		else if (parsedCommand == "QUIT") {
 			break;
@@ -189,15 +191,15 @@ void Server::CheckBoard(char sign) {
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 			if (board[i][j] == '_') {
-				Draw();
 				return;
 			}
 		}
 	}
+	Draw();
 }
 
 void Server::Win(char sign) {
-	string message = "GAME_OVER";
+	string message = "GAME_OVER ";
 	message += sign;
 	message += " WIN\n";
 	mP1.lock();
@@ -206,7 +208,7 @@ void Server::Win(char sign) {
 	Send(message, p2.socket);
 	mP1.unlock();
 	mP2.unlock();
-	Close();
+	ended = true;
 }
 
 void Server::Draw() {
@@ -217,7 +219,7 @@ void Server::Draw() {
 	Send(message, p2.socket);
 	mP1.unlock();
 	mP2.unlock();
-	Close();
+	ended = true;
 }
 
 void Server::Disconect() {
@@ -228,6 +230,7 @@ void Server::Disconect() {
 	Send(message, p2.socket);
 	mP1.unlock();
 	mP2.unlock();
+	ended = true;
 }
 
 void Server::Close() {
